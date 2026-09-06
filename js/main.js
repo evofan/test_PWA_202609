@@ -1,12 +1,17 @@
 // No.登録用
 let numList = [];
+// 入力データ登録用
+let memoList = [];
 
 // Load from Local Storage
 let serializedAry = localStorage.getItem("savedataAry");
+let serializedAry2 = localStorage.getItem("savedataAry2");
 
 // Deserialize
 numList = JSON.parse(serializedAry);
+memoList = JSON.parse(serializedAry2);
 console.log(numList);
+console.log(memoList);
 
 // sound
 // Setup the new Howl.
@@ -20,10 +25,14 @@ const sound2 = new Howl({
 // Change global volume.
 // Howler.volume(0.5);
 
-// ローカルデータが無かった時のみ上書きする処理
+// ローカルデータが無かった時のみ上書きする処理、nullのままだと保存できないのでmust
 if (numList === null || numList.length === 0) {
   // console.log("ローカルストレージにデータが無いので100をテストで入れる");
   numList = [];
+}
+if (memoList === null || memoList.length === 0) {
+  // console.log("ローカルストレージにデータが無いので100をテストで入れる");
+  memoList = [];
 }
 
 /**
@@ -35,7 +44,7 @@ function get_calc(btn) {
   // console.log(btn);
   // console.log(typeof btn); // object
   // 1文字目が演算子の場合は消す
-  let val = document.calculator.display.value;
+  // let val = document.calculator.display.value;
   if (
     (btn.value === "=" ||
       btn.value === "×" ||
@@ -62,6 +71,7 @@ function get_calc(btn) {
     colorElemnt.style.setProperty("background-color", "white");
 
     document.calculator.display_message.value = "";
+    document.calculator.display_message_input.value = "";
   } else {
     if (btn.value === "×") {
       btn.value = "*";
@@ -80,30 +90,40 @@ function get_calc(btn) {
  */
 function setData() {
   let setNo = evaluate(document.calculator.display.value).trim();
+  let setMemo = document.calculator.display_message_input.value;
+  console.log("setMemo: ", setMemo);
   // 数値無し時
   if (setNo === "" || setNo === undefined) {
     alert("番号が入力されていません");
     return false;
   }
-  for (let i = 0; i <= numList.length; i++) {
-    if (setNo === numList[i]) {
-      alert("その番号は既に登録済みです");
-      document.calculator.display.value = "";
-      return false;
-    } else {
-      console.log("登録データ内に無し");
-    }
-  }
+  // 再登録可にする為に一時的に停止
+  // for (let i = 0; i <= numList.length; i++) {
+  //   if (setNo === numList[i]) {
+  //     alert("その番号は既に登録済みです");
+  //     document.calculator.display.value = "";
+  //     return false;
+  //   } else {
+  //     console.log("登録データ内に無し");
+  //   }
+  // }
   alert(`${setNo}番を新たに登録しました`);
 
   document.calculator.display.value = "";
+  document.calculator.display_message_input.value = "";
   numList.push(setNo);
+  if (setMemo === "" || setMemo === undefined || setMemo === null) {
+    setMemo = "データなし";
+  }
+  memoList.push(setMemo);
 
   // Serialize
   serializedAry = JSON.stringify(numList);
+  serializedAry2 = JSON.stringify(memoList);
 
   // Save for Local Storage
   localStorage.setItem("savedataAry", serializedAry);
+  localStorage.setItem("savedataAry2", serializedAry2);
 }
 
 /**
@@ -125,11 +145,15 @@ function deleteData() {
 
       // Serialize
       serializedAry = JSON.stringify(numList);
+      serializedAry2 = JSON.stringify(memoList);
 
       // Save for Local Storage
       localStorage.setItem("savedataAry", serializedAry);
+      localStorage.setItem("savedataAry2", serializedAry2);
 
       document.calculator.display.value = "";
+      document.calculator.display_message_text.value = "";
+      document.calculator.display_message_input.value = "";
       return false;
     } else {
       console.log("登録データ内に無し");
@@ -137,6 +161,8 @@ function deleteData() {
   }
   alert("その番号は登録データ内に見つかりませんでした");
   document.calculator.display.value = "";
+  document.calculator.display_message_text.value = "";
+  document.calculator.display_message_input.value = "";
 }
 
 /**
@@ -153,7 +179,8 @@ function checkData() {
   }
   for (let i = 0; i <= numList.length; i++) {
     if (checkNo === numList[i]) {
-      // console.log("その番号は禁止リストに有ります！");
+      console.log("その番号は禁止リストに有ります！", i, "番目");
+
       let colorElemnt = document.getElementsByClassName("display_message")[0];
       colorElemnt.style.setProperty("background-color", "red");
       colorElemnt.style.setProperty("color", "white");
@@ -161,6 +188,15 @@ function checkData() {
       sound1.stop();
       sound2.play();
       document.calculator.display_message.value = "× その番号は禁止です！";
+
+      // Load from Local Storage
+      serializedAry2 = localStorage.getItem("savedataAry2");
+
+      // Deserialize
+      console.log(memoList);
+      memoList = JSON.parse(serializedAry2);
+
+      document.calculator.display_message_input.value = memoList[i];
 
       return false;
     } else {
